@@ -4,7 +4,6 @@ import { UpdateTimeSheetDTO } from './dto/update-ts.dto';
 import { TimesheetService } from './timesheet.service';
 import { ApproveTimeSheetDTO } from './dto/approve-ts.dto';
 import { AuthenticationGuard } from 'src/auth/guards/auth.guard';
-import { User } from '../user/user.entity';
 
 @Controller('timesheet')
 @UseGuards(AuthenticationGuard)
@@ -27,7 +26,9 @@ export class TimesheetController {
     }
 
     @Get('/pending')
-    async getPendingTS() {
+    async getPendingTS(@Req() request) {
+        const checkUser = await this.TsService.isPM(request.user.id)
+        if (!checkUser) throw new NotAcceptableException('only PM function!')
         return await this.TsService.getAllPendingTS();
     }
 
@@ -60,7 +61,9 @@ export class TimesheetController {
     }
 
     @Get('/worker/:id')
-    async getByPeople(@Param('id') userId: string) {
+    async getByPeople(@Param('id') userId: string, @Req() request) {
+        const checkUser = await this.TsService.isPM(request.user.id)
+        if (!checkUser) throw new NotAcceptableException('only PM function!')
         return this.TsService.getTSByPeople(userId);
     }
 
@@ -73,12 +76,16 @@ export class TimesheetController {
     }
 
     @Put('/approve')
-    async approveByWeek(@Body() data: ApproveTimeSheetDTO) {
+    async approveByWeek(@Body() data: ApproveTimeSheetDTO, @Req() request) {
+        const checkUser = await this.TsService.isPM(request.user.id)
+        if (!checkUser) throw new NotAcceptableException('only PM function!')
         return this.TsService.approveTSByWeek(data);
     }
 
     @Get('/all/week')
-    async getAllByWeek() {
+    async getAllByWeek(@Req() request) {
+        const checkUser = await this.TsService.isPM(request.user.id)
+        if (!checkUser) throw new NotAcceptableException('only PM function!')
         return this.TsService.getAllTSByWeek();
     }
 
