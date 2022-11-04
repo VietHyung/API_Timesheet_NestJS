@@ -1,7 +1,7 @@
 
-import { Client } from "src/client/client.entity";
-import { Task } from "src/task/task.entity";
-import { User } from "src/user/user.entity";
+import { Client } from "../client/client.entity";
+import { Task } from "../task/task.entity";
+import { User } from "../user/user.entity";
 import { Column, Entity, ObjectIdColumn, Index, ManyToOne, ManyToMany, OneToMany, PrimaryGeneratedColumn, BaseEntity, JoinTable } from "typeorm";
 import { Timesheet } from '../timesheet/timesheet.entity';
 

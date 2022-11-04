@@ -1,9 +1,14 @@
-import { Controller, Post, Get, Body, Param, Patch, Delete, Res, Put, HttpCode, UseGuards, Req, NotFoundException, NotAcceptableException } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Patch, Delete, Res, Put, HttpCode, UseGuards, Req, NotFoundException, NotAcceptableException, Query } from '@nestjs/common';
 import { CreateTimeSheetDTO } from './dto/create-ts.dto';
 import { UpdateTimeSheetDTO } from './dto/update-ts.dto';
 import { TimesheetService } from './timesheet.service';
 import { ApproveTimeSheetDTO } from './dto/approve-ts.dto';
 import { AuthenticationGuard } from 'src/auth/guards/auth.guard';
+import { CheckAbilities } from 'src/casl/ability.decorator';
+import { Action } from 'src/casl/ability.factory';
+import { Timesheet } from './timesheet.entity';
+import { Paging } from 'src/common/response/paging';
+import { ResponseData } from 'src/common/response/responseData';
 
 @Controller('timesheet')
 @UseGuards(AuthenticationGuard)
@@ -11,86 +16,39 @@ export class TimesheetController {
     constructor(private readonly TsService: TimesheetService) { }
 
     @Post()
+    @CheckAbilities({ action: Action.Create, subject: Timesheet })
     async addTimesheet(
-        @Res() res,
         @Body() ts: CreateTimeSheetDTO,
         @Body('creatorId') creatorId: string,
         @Body('projectId') projectId: string,
         @Body('taskId') taskId: string
     ) {
         const newTimesheet = await this.TsService.createTimesheet(ts, creatorId, projectId, taskId);
-        return res.json({
-            message: 'TimeSheet was created successfully!',
-            timesheet: newTimesheet,
-        })
-    }
-
-    @Get('/pending')
-    async getPendingTS(@Req() request) {
-        const checkUser = await this.TsService.isPM(request.user.id)
-        if (!checkUser) throw new NotAcceptableException('only PM function!')
-        return await this.TsService.getAllPendingTS();
+        return newTimesheet;
     }
 
     @Get()
-    async getAllTimesheet() {
-        const users = await this.TsService.getTimesheets();
-        return users;
+    @CheckAbilities({ action: Action.Read, subject: Timesheet })
+    async getAllTimesheet(@Query() pageData: object) {
+        const paging = {
+            page: pageData['page'] || 1,
+            page_size: pageData['page_size'] || 2,
+        }
+        const tss = await this.TsService.getAllObj(paging);
+        const [data, total] = tss;
+        const pagingData = new Paging(paging.page, paging.page_size, total)
+
+        return new ResponseData(200, data, 'success', pagingData);
     }
 
     @Get(':id')
+    @CheckAbilities({ action: Action.Read, subject: Timesheet })
     async getTimesheet(@Param('id') timesheetId: string) {
         return this.TsService.getSingleTimesheet(timesheetId);
     }
 
-    @Get('/day/:id')
-    async getByDay(@Param('id') timesheetId: string, @Req() request) {
-        const checkUser = await this.TsService.isUser(request.user.id)
-        if (!checkUser) throw new NotAcceptableException('only user function!')
-        return this.TsService.getMyTimesheetByDay(timesheetId);
-    }
-
-    @Get('/week/:id')
-    async getByWeek(@Param('id') timesheetId: string) {
-        return this.TsService.getMyTimesheetByWeek(timesheetId);
-    }
-
-    @Get('/project/:id')
-    async getByProject(@Param('id') projectId: string) {
-        return this.TsService.getMyTimesheetByProject(projectId);
-    }
-
-    @Get('/worker/:id')
-    async getByPeople(@Param('id') userId: string, @Req() request) {
-        const checkUser = await this.TsService.isPM(request.user.id)
-        if (!checkUser) throw new NotAcceptableException('only PM function!')
-        return this.TsService.getTSByPeople(userId);
-    }
-
-    @Put('/week/:id')
-    async submitByWeek(@Param('id') timesheetId: string, @Req() request) {
-        const checkUser = await this.TsService.isUser(request.user.id)
-        if (!checkUser) throw new NotAcceptableException('only user function!')
-
-        return this.TsService.submitMyTimesheetByWeek(timesheetId);
-    }
-
-    @Put('/approve')
-    async approveByWeek(@Body() data: ApproveTimeSheetDTO, @Req() request) {
-        const checkUser = await this.TsService.isPM(request.user.id)
-        if (!checkUser) throw new NotAcceptableException('only PM function!')
-        return this.TsService.approveTSByWeek(data);
-    }
-
-    @Get('/all/week')
-    async getAllByWeek(@Req() request) {
-        const checkUser = await this.TsService.isPM(request.user.id)
-        if (!checkUser) throw new NotAcceptableException('only PM function!')
-        return this.TsService.getAllTSByWeek();
-    }
-
-
     @Put(':id')
+    @CheckAbilities({ action: Action.Update, subject: Timesheet })
     async updateTimesheet(
         @Param('id') id: string,
         @Body() data: UpdateTimeSheetDTO,
@@ -100,4 +58,54 @@ export class TimesheetController {
     ) {
         return await this.TsService.updateTimesheet(id, data, creatorId, projectId, taskId);
     }
+
+    //PM function
+    @Get('/pending')
+    @CheckAbilities({ action: Action.Read, subject: Timesheet })
+    async getPendingTS() {
+        return await this.TsService.getAllPendingTS();
+    }
+
+    @Get('/week/:id')
+    @CheckAbilities({ action: Action.Read, subject: Timesheet })
+    async getByWeek(@Param('id') timesheetId: string) {
+        return this.TsService.getMyTimesheetByWeek(timesheetId);
+    }
+
+    @Get('/project/:id')
+    @CheckAbilities({ action: Action.Read, subject: Timesheet })
+    async getByProject(@Param('id') projectId: string) {
+        return this.TsService.getMyTimesheetByProject(projectId);
+    }
+
+    @Get('/worker/:id')
+    @CheckAbilities({ action: Action.Read, subject: Timesheet })
+    async getByPeople(@Param('id') userId: string) {
+        return this.TsService.getTSByPeople(userId);
+    }
+
+    @Put('/approve')
+    @CheckAbilities({ action: Action.Update, subject: Timesheet })
+    async approveByWeek(@Body() data: ApproveTimeSheetDTO) {
+        return this.TsService.approveTSByWeek(data);
+    }
+
+    @Get('/all/week')
+    async getAllByWeek() {
+        return this.TsService.getAllTSByWeek();
+    }
+
+    //User own timesheet function
+    @Get('/day/:id')
+    @CheckAbilities({ action: Action.Manage, subject: Timesheet })
+    async getByDay(@Param('id') timesheetId: string) {
+        return this.TsService.getMyTimesheetByDay(timesheetId);
+    }
+
+    @Put('/week/:id')
+    @CheckAbilities({ action: Action.Manage, subject: Timesheet })
+    async submitByWeek(@Param('id') timesheetId: string) {
+        return this.TsService.submitMyTimesheetByWeek(timesheetId);
+    }
+
 }

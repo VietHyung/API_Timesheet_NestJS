@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, InternalServerErrorException, NotFound
 import { Task } from './task.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository } from 'typeorm';
-import { BaseService } from 'src/repositories/base/base.service';
+import { BaseService } from '../repositories/base/base.service';
 import { TaskRepository } from './task.repository';
 
 @Injectable()

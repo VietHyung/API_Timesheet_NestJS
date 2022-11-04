@@ -10,18 +10,25 @@ import { TimesheetModule } from './timesheet/timesheet.module';
 import { TypeOrmConfigAsync } from './config/typeorm.config';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
+import { CaslModule } from './casl/casl.module';
+import { APP_GUARD } from '@nestjs/core';
+import { AbilitiesGuard } from './casl/ability.guard';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync(TypeOrmConfigAsync),
     UserModule,
     ProjectModule,
     TaskModule,
     ClientModule,
     TimesheetModule,
-    AuthModule
+    AuthModule,
+    CaslModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+  ],
 })
 export class AppModule { }

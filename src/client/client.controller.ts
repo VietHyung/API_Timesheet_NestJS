@@ -1,8 +1,13 @@
 
-import { Controller, Post, Get, Body, Param, Patch, Delete, Res, Put, HttpCode, ConflictException, NotFoundException, UseGuards, Req, NotAcceptableException } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Patch, Delete, Res, Put, HttpCode, ConflictException, NotFoundException, UseGuards, Req, NotAcceptableException, Query } from '@nestjs/common';
 import { AuthenticationGuard } from 'src/auth/guards/auth.guard';
+import { CheckAbilities } from 'src/casl/ability.decorator';
+import { Action } from 'src/casl/ability.factory';
 import { ClientService } from './client.service';
 import { CreateClientDTO } from './dto/create-client.dto';
+import { Client } from './client.entity';
+import { Paging } from 'src/common/response/paging';
+import { ResponseData } from 'src/common/response/responseData';
 
 @Controller('clients')
 @UseGuards(AuthenticationGuard)
@@ -11,31 +16,32 @@ export class ClientController {
     constructor(private readonly ClientService: ClientService) { }
 
     @Post()
-    async addClient(@Res() res, @Body() client: CreateClientDTO, @Req() request) {
-        const checkUser = await this.ClientService.isUser(request.user.id)
-        if (!checkUser) throw new NotAcceptableException('only Admin function!')
-
+    @CheckAbilities({ action: Action.Manage, subject: Client })
+    async addClient(@Body() client: CreateClientDTO) {
         const conflict = await this.ClientService.findByName(client.clientName)
         if (conflict) {
             throw new ConflictException("client already exist");
         }
         const newClient = await this.ClientService.createOneObj(client);
-        return res.json({
-            message: 'Client was created successfully!',
-            Client: newClient,
-        })
+        return newClient;
     }
 
     @Get()
-    async getAllClient() {
-        const clients = await this.ClientService.getAllObj();
-        if (!clients) {
-            throw new NotFoundException('table empty, need to add client!')
+    @CheckAbilities({ action: Action.Manage, subject: Client })
+    async getAllClient(@Query() pageData: object) {
+        const paging = {
+            page: pageData['page'] || 1,
+            page_size: pageData['page_size'] || 2,
         }
-        return clients;
+        const clients = await this.ClientService.getAllObj(paging);
+        const [data, total] = clients;
+        const pagingData = new Paging(paging.page, paging.page_size, total)
+
+        return new ResponseData(200, data, 'success', pagingData);
     }
 
     @Get(':id')
+    @CheckAbilities({ action: Action.Manage, subject: Client })
     async getClient(@Param('id') clientId: string) {
         const client = this.ClientService.GetOneObj(clientId)
         if (!client) {
@@ -45,13 +51,11 @@ export class ClientController {
     }
 
     @Put(':id')
+    @CheckAbilities({ action: Action.Manage, subject: Client })
     async updateClient(
-        @Req() request,
         @Param('id') clientId: string,
         @Body() data: Partial<CreateClientDTO>,
     ) {
-        const checkUser = await this.ClientService.isUser(request.user.id)
-        if (!checkUser) throw new NotAcceptableException('only Admin function!')
         const check = await this.ClientService.GetOneObj(clientId)
         if (!check) {
             throw new NotFoundException('user not found to update!')

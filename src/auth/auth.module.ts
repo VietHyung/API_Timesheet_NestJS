@@ -10,7 +10,7 @@ import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JsonWebTokenStrategy } from './strategies/jwt.strategy';
 import { TaskModule } from '../task/task.module';
-import { JWT_SECRET_KEY } from 'src/config/jwt.config';
+import { jwtConfig } from 'src/config/jwt.config';
 
 
 @Module({
@@ -19,10 +19,7 @@ import { JWT_SECRET_KEY } from 'src/config/jwt.config';
     TaskModule,
     TypeOrmModule.forFeature([User]),
     PassportModule,
-    JwtModule.register({
-      secret: JWT_SECRET_KEY,
-      signOptions: { expiresIn: '1000s' },
-    }),
+    JwtModule.registerAsync(jwtConfig),
   ],
   controllers: [AuthController],
   providers: [AuthService, UserService, LocalStrategy, JsonWebTokenStrategy]

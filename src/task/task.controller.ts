@@ -3,7 +3,12 @@ import { UpdateTaskDTO } from './dto/update-task.dto';
 
 import { TaskService } from './task.service';
 import { CreateTaskDTO } from './dto/create-task.dto';
-import { AuthenticationGuard } from 'src/auth/guards/auth.guard';
+import { AuthenticationGuard } from '../auth/guards/auth.guard';
+import { CheckAbilities } from '../casl/ability.decorator';
+import { Action } from '../casl/ability.factory';
+import { Task } from './task.entity';
+import { Paging } from 'src/common/response/paging';
+import { ResponseData } from 'src/common/response/responseData';
 
 @Controller('tasks')
 @UseGuards(AuthenticationGuard)
@@ -14,28 +19,30 @@ export class TaskController {
     ) { }
 
     @Post()
-    async addTask(@Res() res, @Body() task: CreateTaskDTO, @Req() request) {
-        const checkUser = await this.UserService.isAdmin(request.user.id)
-        if (!checkUser) throw new NotAcceptableException('only Admin function!')
+    @CheckAbilities({ action: Action.Manage, subject: Task })
+    async addTask(@Body() task: CreateTaskDTO) {
 
         const newTask = await this.TaskService.createOneObj(task);
 
-        return res.json({
-            message: 'Task was created successfully!',
-            task: newTask,
-        })
+        return newTask;
     }
 
     @Get()
-    async getAllTask() {
-        const tasks = await this.TaskService.getAllObj();
-        if (!tasks) {
-            throw new NotFoundException('table empty, need to add task!')
+    @CheckAbilities({ action: Action.Manage, subject: Task })
+    async getAllTask(@Query() pageData: object) {
+        const paging = {
+            page: pageData['page'] || 1,
+            page_size: pageData['page_size'] || 2,
         }
-        return tasks;
+        const tasks = await this.TaskService.getAllObj(paging);
+        const [data, total] = tasks;
+        const pagingData = new Paging(paging.page, paging.page_size, total)
+
+        return new ResponseData(200, data, 'success', pagingData);
     }
 
     @Get(':id')
+    @CheckAbilities({ action: Action.Manage, subject: Task })
     async getTask(@Param('id') taskId: string) {
         const task = await this.TaskService.GetOneObj(taskId)
         if (!task) {
@@ -46,6 +53,7 @@ export class TaskController {
 
 
     @Put(':id')
+    @CheckAbilities({ action: Action.Manage, subject: Task })
     async updateTask(
         @Param('id') taskId: string,
         @Body() data: Partial<UpdateTaskDTO>,
@@ -58,9 +66,8 @@ export class TaskController {
     }
 
     @Delete(':id')
-    async delTask(@Param('id') taskId: string, @Req() request) {
-        const checkUser = await this.UserService.isAdmin(request.user.id)
-        if (!checkUser) throw new NotAcceptableException('only Admin function!')
+    @CheckAbilities({ action: Action.Manage, subject: Task })
+    async delTask(@Param('id') taskId: string) {
         return this.TaskService.removeTask(taskId);
     }
 }

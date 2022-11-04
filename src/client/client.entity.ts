@@ -1,6 +1,6 @@
 
 import { Column, Entity, ObjectIdColumn, Index, ManyToOne, ManyToMany, OneToMany, PrimaryGeneratedColumn, JoinTable, BaseEntity } from "typeorm";
-import { Project } from 'src/project/project.entity';
+import { Project } from '../project/project.entity';
 
 
 @Entity('clients')

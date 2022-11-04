@@ -1,8 +1,8 @@
 
-import { Task } from "src/task/task.entity";
 import { Column, Entity, OneToOne, Index, OneToMany, ManyToMany, JoinTable, PrimaryGeneratedColumn, BaseEntity } from "typeorm";
-import { Project } from "src/project/project.entity";
-import { Timesheet } from '../timesheet/timesheet.entity';
+import { Task } from '../task/task.entity';
+import { Project } from '../project/project.entity';
+import { Timesheet } from "../timesheet/timesheet.entity";
 
 @Entity('users')
 export class User extends BaseEntity {
@@ -22,7 +22,7 @@ export class User extends BaseEntity {
     @Column()
     avatar: string;
 
-    @Column({ default: 1 })
+    @Column({ default: 3 })
     level: number;
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })

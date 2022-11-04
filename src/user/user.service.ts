@@ -51,13 +51,7 @@ export class UserService extends BaseService<User, UserRepository> {
     }
 
     async findByName(name: string): Promise<User> {
-        let task;
-        try {
-            task = await this.usersRepository.findOne({ where: { name: name } })
-        } catch (error) {
-
-            throw new NotFoundException('fail to search user!');
-        }
+        const task = await this.usersRepository.findOne({ where: { name: name } })
         return task;
     }
 

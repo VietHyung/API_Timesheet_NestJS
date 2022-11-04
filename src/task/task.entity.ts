@@ -1,6 +1,6 @@
 
-import { Project } from "src/project/project.entity";
-import { User } from "src/user/user.entity";
+import { Project } from "../project/project.entity";
+import { User } from "../user/user.entity";
 import { Column, Entity, ObjectIdColumn, Index, ManyToOne, PrimaryGeneratedColumn, OneToMany, BaseEntity } from "typeorm";
 import { Timesheet } from '../timesheet/timesheet.entity';
 

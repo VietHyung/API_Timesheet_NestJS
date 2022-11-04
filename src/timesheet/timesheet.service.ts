@@ -59,14 +59,6 @@ export class TimesheetService extends BaseService<Timesheet, TimesheetRepository
         return ts;
     }
 
-    async getTimesheets(): Promise<Timesheet[]> {
-        const ts = await this.timesheetsRepository.find();
-        if (!ts) {
-            throw new NotFoundException('table empty, need to add user!')
-        }
-        return ts;
-    }
-
     async getSingleTimesheet(tsId: string): Promise<Timesheet> {
         const ts = await this.findTimesheet(tsId);
         if (!ts) {

@@ -1,6 +1,6 @@
 
-import { Project } from "src/project/project.entity";
-import { User } from "src/user/user.entity";
+import { Project } from "../project/project.entity";
+import { User } from "../user/user.entity";
 import { Column, Entity, ObjectIdColumn, Index, ManyToOne, PrimaryGeneratedColumn, JoinColumn, BaseEntity } from "typeorm";
 import { Task } from '../task/task.entity';
 enum TimesheetStatus {

@@ -10,20 +10,6 @@ export class BaseService<T extends BaseEntity, R extends Repository<T>> implemen
         this.repository = repository
         //this.logger = logger
     }
-
-    async isPM(id: EntityId): Promise<Boolean> {
-        const check = this.findOneObj(id)
-        return await check['level'] == 2;
-    }
-    async isAdmin(id: EntityId): Promise<Boolean> {
-        const check = this.findOneObj(id)
-        return await check['level'] == 1;
-    }
-    async isUser(id: EntityId): Promise<Boolean> {
-        const check = this.findOneObj(id)
-        if (check['level'] == 3) return await true
-        else return await false;
-    }
     async createOneObj(data: any,): Promise<T> {
         const saved = await this.repository.save(data);
         return saved;
@@ -32,8 +18,11 @@ export class BaseService<T extends BaseEntity, R extends Repository<T>> implemen
         return await this.repository.findOneBy({ id: id } as unknown as FindOptionsWhere<T>);
     }
 
-    async getAllObj(): Promise<T[]> {
-        return this.repository.find();
+    async getAllObj(paging: any): Promise<[T[], number]> {
+        return await this.repository.findAndCount({
+            take: paging.page_size,
+            skip: (paging.page - 1) * paging.page_size,
+        });
     }
 
     async GetOneObj(id: EntityId): Promise<T> {

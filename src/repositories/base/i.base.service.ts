@@ -7,17 +7,11 @@ export interface IBaseService<T> {
 
     findOneObj(id: EntityId): Promise<T>
 
-    getAllObj(): Promise<T[]>
+    getAllObj(paging: any): Promise<[T[], number]>
 
     GetOneObj(id: EntityId): Promise<T>
 
     UpdateOneObj(id: EntityId, data: any): Promise<T>
-
-    isUser(id: EntityId): Promise<Boolean>
-
-    isPM(id: EntityId): Promise<Boolean>
-
-    isAdmin(id: EntityId): Promise<Boolean>
 
     deleteOneObj(id: EntityId): Promise<DeleteResult>
 }
